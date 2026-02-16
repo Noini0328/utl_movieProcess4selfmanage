@@ -99,6 +99,14 @@ def concat_videos(input_dir: Path, output_file: Path):
         print("動画がありません")
         return
 
+    if len(files) == 1:  # 結合ファイルが1つの場合も変換
+        print("結合ファイルが1つのみ、変換します。")
+        out = tmp_dir / "temp_1.mp4"
+        convert_video(files[0], out)  # convert_videoを使用してサイズ調整と変換
+        os.rename(str(out), str(output_file))  # 結果を指定の出力先に移動
+        print("結合完了:", output_file)
+        return
+
     converted_files = []
     for i, f in enumerate(files, 1):
         out = tmp_dir / f"temp_{i}.mp4"
@@ -118,6 +126,8 @@ def concat_videos(input_dir: Path, output_file: Path):
     subprocess.run(cmd, check=True)
 
     print("結合完了:", output_file)
+
+
 
 
 # =========================
