@@ -62,20 +62,23 @@ def get_media_creation_time(file: Path) -> float:
 
 
 def convert_video(infile: Path, outfile: Path):
-    """縦横比を維持しつつ1280x720に収め、音量を正規化"""
+    """縦横比を維持しつつ1280x720に収め、音声を自然に正規化"""
     vf_filter = (
         f"scale='min({TARGET_WIDTH}/iw,{TARGET_HEIGHT}/ih)*iw':"
         f"'min({TARGET_WIDTH}/iw,{TARGET_HEIGHT}/ih)*ih',"
         f"pad={TARGET_WIDTH}:{TARGET_HEIGHT}:(ow-iw)/2:(oh-ih)/2,"
         "fps=30,format=yuv420p"
     )
+
     cmd = [
         "ffmpeg", "-y", "-i", str(infile),
         "-vf", vf_filter,
+        "-af", "dynaudnorm",  # ← ここで瞬間音量正規化
         "-c:v", "libx264", "-crf", "20", "-preset", "fast",
         "-c:a", "aac", "-b:a", "192k", "-ac", "2",
         str(outfile)
     ]
+
     subprocess.run(cmd, check=True)
 
 
