@@ -252,7 +252,34 @@ def add_credit(input_file, text_file, align, color, fontsize, output_file):
     print(f"Done! Output: {output_file}")
 
 
+# =========================
+# PowerPoint用圧縮
+# =========================
 
+def compress_for_powerpoint(input_file: Path, output_file: Path, remove_audio=False):
+
+    vf_filter = "scale=960:-2,fps=15"
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", str(input_file),
+        "-vf", vf_filter,
+        "-c:v", "libx264",
+        "-crf", "28",
+        "-preset", "veryfast",
+        "-movflags", "+faststart"
+    ]
+
+    if remove_audio:
+        cmd.append("-an")
+    else:
+        cmd += ["-c:a", "aac", "-b:a", "96k"]
+
+    cmd.append(str(output_file))
+
+    subprocess.run(cmd, check=True)
+
+    print("圧縮完了:", output_file)
 
 
 # =========================
@@ -395,6 +422,40 @@ def launch_gui():
             credit_btn
         ])
 
+        # ===== PowerPoint圧縮 =====
+        comp_in = ft.TextField(label="入力動画", expand=True)
+        comp_out = ft.TextField(label="出力動画", expand=True)
+
+        comp_audio_btn = ft.ElevatedButton(
+            "音声あり圧縮",
+            on_click=lambda e: compress_for_powerpoint(
+                Path(comp_in.value),
+                Path(comp_out.value),
+                False
+            )
+        )
+
+        comp_noaudio_btn = ft.ElevatedButton(
+            "音声なし圧縮",
+            on_click=lambda e: compress_for_powerpoint(
+                Path(comp_in.value),
+                Path(comp_out.value),
+                True
+            )
+        )
+
+        compress_ui = ft.Column([
+            ft.Row([comp_in,
+                ft.ElevatedButton("参照",
+                    on_click=lambda e: select_file(comp_in))]),
+            ft.Row([comp_out,
+                ft.ElevatedButton("保存先",
+                    on_click=lambda e: select_file(comp_out, save=True))]),
+            ft.Row([
+                comp_audio_btn,
+                comp_noaudio_btn
+            ])
+        ])
 
         page.add(
             ft.Column([
@@ -409,6 +470,7 @@ def launch_gui():
                 ft.Tab(text="結合", content=concat_ui),
                 ft.Tab(text="分割", content=split_ui),
                 ft.Tab(text="クレジット", content=credit_ui),
+                ft.Tab(text="PowerPoint圧縮", content=compress_ui),
             ])
         )
 
